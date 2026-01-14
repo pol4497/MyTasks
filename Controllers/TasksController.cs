@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MyTasks.Models;
 
 namespace MyTasks.Controllers
 {
@@ -15,68 +16,112 @@ namespace MyTasks.Controllers
             _context = context;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Models.TaskItem>>> GetTasks()
+        private static readonly object _tasksLock = new object();
+
+        static private List<TaskItem> tasks = new List<TaskItem>()
         {
-            return await _context.TaskItems.ToListAsync();
+            new TaskItem()
+            {
+                Id = 1,
+                Title = "Buy groceries",
+                Description = "Milk, eggs, bread",
+                DueDate = DateTime.UtcNow.AddDays(1),
+                Category = "Personal",
+                Status = Models.TaskStatus.Pending
+            },
+            new TaskItem()
+            {
+                Id = 2,
+                Title = "Finish project report",
+                Description = "Complete the final draft of the project report",
+                DueDate = DateTime.UtcNow.AddDays(3),
+                Category = "Work",
+                Status = Models.TaskStatus.InProgress
+            },
+            new TaskItem()
+            {
+                Id = 3,
+                Title = "Call plumber",
+                Description = "Fix the leaking sink in the kitchen",
+                DueDate = DateTime.UtcNow.AddDays(2),
+                Category = "Home",
+                Status = Models.TaskStatus.Pending
+            },
+            new TaskItem()
+            {
+                Id = 4,
+                Title = "Schedule dentist appointment",
+                Description = "Routine check-up and cleaning",
+                DueDate = DateTime.UtcNow.AddDays(7),
+                Category = "Health",
+                Status = Models.TaskStatus.Pending
+            }
+        };
+
+        [HttpGet]
+        public Task<ActionResult<IEnumerable<TaskItem>>> GetTasks()
+        {
+            List<TaskItem> copy;
+            lock(_tasksLock)
+            {
+                copy = tasks.ToList();
+            }
+            return Task.FromResult<ActionResult<IEnumerable<TaskItem>>>(Ok(copy));
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Models.TaskItem>> GetTask(int id)
+        public Task<ActionResult<TaskItem>> GetTask(int id)
         {
-            var taskItem = await _context.TaskItems.FindAsync(id);
-            if (taskItem == null)
-            {
-                return NotFound();
-            }
-            return taskItem;
+            var item = tasks.FirstOrDefault(t => t.Id == id);
+            if (item == null) return Task.FromResult<ActionResult<TaskItem>>(NotFound());
+            return Task.FromResult<ActionResult<TaskItem>>(item);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Models.TaskItem>> CreateTask(Models.TaskItem taskItem)
+        public Task<ActionResult<TaskItem>> CreateTask(TaskItem taskItem)
         {
-            _context.TaskItems.Add(taskItem);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetTask), new { id = taskItem.Id }, taskItem);
+            if (taskItem == null) return Task.FromResult<ActionResult<TaskItem>>(BadRequest());
+
+            lock (_tasksLock)
+            {
+                tasks.Add(taskItem);
+            }
+
+            return Task.FromResult<ActionResult<TaskItem>>(CreatedAtAction(nameof(GetTask), new { id = taskItem.Id }, taskItem));
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTask(int id, Models.TaskItem taskItem)
+        public Task<IActionResult> UpdateTask(int id, TaskItem taskItem)
         {
-            if (id != taskItem.Id)
+            if (taskItem == null || id != taskItem.Id) return Task.FromResult<IActionResult>(BadRequest());
+
+            lock (_tasksLock)
             {
-                return BadRequest();
+                var existing = tasks.FirstOrDefault(t => t.Id == id);
+                if (existing == null) return Task.FromResult<IActionResult>(NotFound());
+
+                // map allowed fields
+                existing.Title = taskItem.Title;
+                existing.Description = taskItem.Description;
+                existing.DueDate = taskItem.DueDate;
+                existing.Category = taskItem.Category;
+                existing.Status = taskItem.Status;
             }
-            _context.Entry(taskItem).State = EntityState.Modified;
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.TaskItems.Any(e => e.Id == id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return NoContent();
+
+            return Task.FromResult<IActionResult>(NoContent());
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTask(int id)
+        public Task<IActionResult> DeleteTask(int id)
         {
-            var taskItem = await _context.TaskItems.FindAsync(id);
-            if (taskItem == null)
+            lock (_tasksLock)
             {
-                return NotFound();
+                var existing = tasks.FirstOrDefault(t => t.Id == id);
+                if (existing == null) return Task.FromResult<IActionResult>(NotFound());
+                tasks.Remove(existing);
             }
-            _context.TaskItems.Remove(taskItem);
-            await _context.SaveChangesAsync();
-            return NoContent();
+
+            return Task.FromResult<IActionResult>(NoContent());
         }
     }
 }

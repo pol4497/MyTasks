@@ -1,6 +1,39 @@
-@MyTasks_HostAddress = http://localhost:5235
+@rootURL = https://localhost:7082
 
-GET {{MyTasks_HostAddress}}/weatherforecast/
+GET {{rootURL}}/weatherforecast/
 Accept: application/json
 
 ###
+GET {{rootURL}}/api/tasks
+Accept: application/json
+
+###
+GET {{rootURL}}/api/tasks/5
+Accept: application/json
+
+###
+POST {{rootURL}}/api/tasks
+Content-Type: application/json
+{
+    "id": 5,
+    "title": "New Task",
+    "description": "This is a new task",
+    "dueDate": "2024-12-31T23:59:59",
+    "category": "General",
+    "status": 0
+}
+
+###
+PUT {{rootURL}}/api/tasks/5
+Content-Type: application/json
+{
+    "id": 5,
+    "title": "Updated Task",
+    "description": "This task has been updated",
+    "dueDate": "2025-01-15T12:00:00",
+    "category": "Work",
+    "status": 1
+}
+
+###
+DELETE {{rootURL}}/api/tasks/5  
