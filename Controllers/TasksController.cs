@@ -1,78 +1,81 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MyTasks.Dtos;
 using MyTasks.Models;
+using MyTasks.Repositories;
 
 namespace MyTasks.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TasksController : ControllerBase
+    public class TasksController(ITaskRepository repo) : ControllerBase
     {
-        private readonly Data.MyTasksContext _context;
-
-        public TasksController(Data.MyTasksContext context)
-        {
-            _context = context;
-        }
 
         // GET: api/Tasks
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TaskItem>>> GetTasks()
         {
-            var items = await _context.TaskItems.AsNoTracking().ToListAsync();
-            return Ok(items);
+            return Ok(await repo.GetTasksAsync());
         }
 
         // GET: api/Tasks/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<TaskItem>> GetTask(int id)
         {
-            var item = await _context.TaskItems.FindAsync(id);
-            if (item == null) return NotFound();
-            return item;
+            var task = await repo.GetTaskByIdAsync(id);
+
+            if (task == null) return NotFound();
+            return task;
         }
 
         // POST: api/Tasks
         [HttpPost]
         public async Task<ActionResult<TaskItem>> CreateTask(TaskItem taskItem)
         {
-            if (taskItem == null) return BadRequest();
-            _context.TaskItems.Add(taskItem);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetTask), new { id = taskItem.Id }, taskItem);
+            repo.AddTask(taskItem);
+            if (await repo.SaveChangesAsync())
+            {
+                return CreatedAtAction(nameof(GetTask), new { id = taskItem.Id }, taskItem);
+            }
+            return BadRequest("Problem creating this Task");
         }
 
         // PUT: api/Tasks/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTask(int id, TaskItem taskItem)
         {
-            if (taskItem == null || id != taskItem.Id) return BadRequest();
+            if (taskItem.Id != id || !TaskExists(id))
+                return BadRequest("Cannot update this task");
 
-            var existing = await _context.TaskItems.FindAsync(id);
-            if (existing == null) return NotFound();
+            repo.UpdateTask(taskItem);
 
-            // map allowed fields
-            existing.Title = taskItem.Title;
-            existing.Description = taskItem.Description;
-            existing.DueDate = taskItem.DueDate;
-            existing.Category = taskItem.Category;
-            existing.Status = taskItem.Status;
+            if (await repo.SaveChangesAsync())
+            {
+                return NoContent();
+            }
 
-            await _context.SaveChangesAsync();
-            return NoContent();
+            return BadRequest("Problem updating this task");
         }
 
         // DELETE: api/Tasks/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(int id)
         {
-            var existing = await _context.TaskItems.FindAsync(id);
-            if (existing == null) return NotFound();
+            var task = await repo.GetTaskByIdAsync(id);
+            if (task == null) return NotFound();
 
-            _context.TaskItems.Remove(existing);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            repo.DeleteTask(task);
+            if (await repo.SaveChangesAsync())
+            {
+                return NoContent();
+            }
+
+            return BadRequest("Problem deleting this task");
+        }
+
+        private bool TaskExists(int id)
+        {
+            return repo.TaskExists(id);
         }
     }
 }

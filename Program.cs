@@ -1,16 +1,19 @@
 using Microsoft.EntityFrameworkCore;
+using MyTasks.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add DbContext
-builder.Services.AddDbContext<MyTasks.Data.MyTasksContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("MyTasksContext") ?? "Data Source=MyTasks.db"));
+
 
 // Add services to the container.
 
 builder.Services.AddControllers();
+// Add DbContext
+builder.Services.AddDbContext<MyTasks.Data.MyTasksContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("MyTasksContext") ?? "Data Source=MyTasks.db"));
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 
 var app = builder.Build();
 
