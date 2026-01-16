@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using MyTasks.Dtos;
 using MyTasks.Models;
 using MyTasks.Repositories;
 
