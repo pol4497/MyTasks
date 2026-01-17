@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MyTasks.Exceptions;
 using MyTasks.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.AddProblemDetails(configure =>
+{
+    configure.CustomizeProblemDetails = context =>
+    {
+        context.ProblemDetails.Extensions.TryAdd("requestId", context.HttpContext.TraceIdentifier);
+    };
+});
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddControllers();
 // Add DbContext
 builder.Services.AddDbContext<MyTasks.Data.MyTasksContext>(options =>
@@ -22,6 +31,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 
