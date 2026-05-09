@@ -4,41 +4,41 @@ using MyTasks.Models;
 
 namespace MyTasks.Repositories
 {
-    public class TaskRepository(MyTasksContext context) : ITaskRepository
+    public class TaskRepository(MyTasksContext _context) : ITaskRepository
     {
         public async Task<IReadOnlyList<TaskItem>> GetTasksAsync()
         {
-            return await context.TaskItems.ToListAsync();
+            return await _context.TaskItems.ToListAsync();
         }
 
         public async Task<TaskItem?> GetTaskByIdAsync(int id)
         {
-            return await context.TaskItems.FindAsync(id);
+            return await _context.TaskItems.FindAsync(id);
         }
 
         public void AddTask(TaskItem task)
         {
-            context.Add(task);
+            _context.Add(task);
         }
 
         public void UpdateTask(TaskItem task)
         {
-            context.Entry(task).State = EntityState.Modified;
+            _context.Entry(task).State = EntityState.Modified;
         }
 
         public void DeleteTask(TaskItem task)
         {
-            context.TaskItems.Remove(task);
+            _context.TaskItems.Remove(task);
         }
 
         public bool TaskExists(int id)
         {
-            return context.TaskItems.Any(x =>  x.Id == id);
+            return _context.TaskItems.Any(x =>  x.Id == id);
         }
 
         public async Task<bool> SaveChangesAsync()
         {
-            return await context.SaveChangesAsync() > 0;
+            return await _context.SaveChangesAsync() > 0;
         }
 
         

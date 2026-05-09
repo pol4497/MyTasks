@@ -6,21 +6,21 @@ namespace MyTasks.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TasksController(ITaskRepository repo) : ControllerBase
+    public class TasksController(ITaskRepository _repo) : ControllerBase
     {
 
         // GET: api/Tasks
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TaskItem>>> GetTasks()
         {
-            return Ok(await repo.GetTasksAsync());
+            return Ok(await _repo.GetTasksAsync());
         }
 
         // GET: api/Tasks/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<TaskItem>> GetTask(int id)
         {
-            var task = await repo.GetTaskByIdAsync(id);
+            var task = await _repo.GetTaskByIdAsync(id);
 
             if (task == null) return NotFound();
             return task;
@@ -30,8 +30,8 @@ namespace MyTasks.Controllers
         [HttpPost]
         public async Task<ActionResult<TaskItem>> CreateTask(TaskItem taskItem)
         {
-            repo.AddTask(taskItem);
-            if (await repo.SaveChangesAsync())
+            _repo.AddTask(taskItem);
+            if (await _repo.SaveChangesAsync())
             {
                 return CreatedAtAction(nameof(GetTask), new { id = taskItem.Id }, taskItem);
             }
@@ -42,12 +42,12 @@ namespace MyTasks.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTask(int id, TaskItem taskItem)
         {
-            if (taskItem.Id != id || !TaskExists(id))
+            if (taskItem.Id != id || !_repo.TaskExists(id))
                 return BadRequest("Cannot update this task");
 
-            repo.UpdateTask(taskItem);
+            _repo.UpdateTask(taskItem);
 
-            if (await repo.SaveChangesAsync())
+            if (await _repo.SaveChangesAsync())
             {
                 return NoContent();
             }
@@ -59,21 +59,16 @@ namespace MyTasks.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(int id)
         {
-            var task = await repo.GetTaskByIdAsync(id);
+            var task = await _repo.GetTaskByIdAsync(id);
             if (task == null) return NotFound();
 
-            repo.DeleteTask(task);
-            if (await repo.SaveChangesAsync())
+            _repo.DeleteTask(task);
+            if (await _repo.SaveChangesAsync())
             {
                 return NoContent();
             }
 
             return BadRequest("Problem deleting this task");
-        }
-
-        private bool TaskExists(int id)
-        {
-            return repo.TaskExists(id);
         }
     }
 }
