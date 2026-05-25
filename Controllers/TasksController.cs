@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MyTasks.Dtos;
+using MyTasks.Mappings;
 using MyTasks.Models;
 using MyTasks.Repositories;
 
@@ -9,66 +11,84 @@ namespace MyTasks.Controllers
     public class TasksController(ITaskRepository _repo) : ControllerBase
     {
 
-        // GET: api/Tasks
+        /// <summary>
+        /// Retrieves a collection of tasks based on the specified query parameters.
+        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TaskItem>>> GetTasks()
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<TaskReadDto>>> GetTasks([FromQuery] TaskItemDtos queryParams)
         {
-            return Ok(await _repo.GetTasksAsync());
+            var tasks = await _repo.GetTasksAsync(queryParams);
+            var dtos = tasks.Select(t => t.ToReadDto());
+            return Ok(dtos);
         }
 
-        // GET: api/Tasks/{id}
+        /// <summary>
+        /// Retrieves a task by its unique identifier.
+        /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<TaskItem>> GetTask(int id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<TaskReadDto>> GetTask(int id)
         {
             var task = await _repo.GetTaskByIdAsync(id);
 
             if (task == null) return NotFound();
-            return task;
+            return Ok(task.ToReadDto());
         }
 
-        // POST: api/Tasks
+        /// <summary>
+        /// Creates a new task and saves it to the repository.
+        /// </summary>
         [HttpPost]
-        public async Task<ActionResult<TaskItem>> CreateTask(TaskItem taskItem)
+        [ProducesResponseType(typeof(TaskReadDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<TaskReadDto>> CreateTask([FromBody] TaskCreateDto dto)
         {
-            _repo.AddTask(taskItem);
-            if (await _repo.SaveChangesAsync())
-            {
-                return CreatedAtAction(nameof(GetTask), new { id = taskItem.Id }, taskItem);
-            }
-            return BadRequest("Problem creating this Task");
+            var task = dto.ToEntity();
+            _repo.AddTask(task);
+            await _repo.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetTask), new { id = task.Id }, task.ToReadDto());
         }
 
-        // PUT: api/Tasks/{id}
+        /// <summary>
+        /// Updates an existing task with the specified ID using the provided data.
+        /// </summary>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTask(int id, TaskItem taskItem)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskUpdateDto dto)
         {
-            if (taskItem.Id != id || !_repo.TaskExists(id))
-                return BadRequest("Cannot update this task");
+            var existingTask = await _repo.GetTaskByIdAsync(id);
 
-            _repo.UpdateTask(taskItem);
-
-            if (await _repo.SaveChangesAsync())
+            if (existingTask == null)
             {
-                return NoContent();
+                return NotFound();
             }
 
-            return BadRequest("Problem updating this task");
+            dto.UpdateEntity(existingTask);
+
+            await _repo.SaveChangesAsync();
+
+            return NoContent();
         }
 
-        // DELETE: api/Tasks/{id}
+        /// <summary>
+        /// Deletes the task with the specified identifier.
+        /// </summary>
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteTask(int id)
         {
             var task = await _repo.GetTaskByIdAsync(id);
             if (task == null) return NotFound();
 
             _repo.DeleteTask(task);
-            if (await _repo.SaveChangesAsync())
-            {
-                return NoContent();
-            }
-
-            return BadRequest("Problem deleting this task");
+            await _repo.SaveChangesAsync();
+            return NoContent();
         }
     }
 }
