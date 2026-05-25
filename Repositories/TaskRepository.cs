@@ -47,7 +47,7 @@ namespace MyTasks.Repositories
 
             if (!string.IsNullOrWhiteSpace(queryParams.Search))
             {
-                var s = $"%{queryParams.Search.Trim()}%";
+                var s = queryParams.Search.Trim();
                 query = query.Where(t =>
                     EF.Functions.Like(t.Title, $"%{s}%") ||
                     EF.Functions.Like(t.Description, $"%{s}%"));
