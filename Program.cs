@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MyTasks.Exceptions;
 using MyTasks.Repositories;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +17,12 @@ builder.Services.AddProblemDetails(configure =>
     };
 });
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters
+            .Add(new JsonStringEnumConverter());
+    });
 // Add DbContext
 builder.Services.AddDbContext<MyTasks.Data.MyTasksContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("MyTasksContext") ?? "Data Source=MyTasks.db"));

@@ -14,7 +14,7 @@ namespace MyTasks.Mappings
                 Description = task.Description,
                 DueDate = task.DueDate,
                 Category = task.Category,
-                Status = task.Status,
+                Status = task.Status.ToString(),
                 CreatedAt = task.CreatedAt,
                 UpdatedAt = task.UpdatedAt
             };
