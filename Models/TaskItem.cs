@@ -15,5 +15,7 @@
         public DateTime? DueDate { get; set; }
         public string Category { get; set; } = string.Empty;
         public TaskStatus Status { get; set; } = TaskStatus.Pending;
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }

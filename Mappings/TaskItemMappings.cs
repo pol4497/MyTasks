@@ -14,7 +14,9 @@ namespace MyTasks.Mappings
                 Description = task.Description,
                 DueDate = task.DueDate,
                 Category = task.Category,
-                Status = task.Status
+                Status = task.Status,
+                CreatedAt = task.CreatedAt,
+                UpdatedAt = task.UpdatedAt
             };
         }
 
@@ -26,7 +28,9 @@ namespace MyTasks.Mappings
                 Description = dto.Description,
                 DueDate = dto.DueDate,
                 Category = dto.Category,
-                Status = Models.TaskStatus.Pending
+                Status = Models.TaskStatus.Pending,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
         }
 
@@ -37,6 +41,7 @@ namespace MyTasks.Mappings
             task.DueDate = dto.DueDate;
             task.Category = dto.Category;
             task.Status = dto.Status;
+            task.UpdatedAt = DateTime.UtcNow;
         }
     }
 }
