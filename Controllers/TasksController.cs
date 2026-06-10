@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MyTasks.Dtos;
 using MyTasks.Mappings;
-using MyTasks.Models;
 using MyTasks.Repositories;
 
 namespace MyTasks.Controllers
