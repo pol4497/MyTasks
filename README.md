@@ -22,7 +22,7 @@ Getting Started:
    This will create the MyTasks.db file automatically.
 
 5. Run the application.
-6. If you want to run the CRUD operations with OpenAPI, create a {fileName}.http file in project's directory to run the requests. 
+6. To test the endpoints, open MyTasks.http file and you can find a list of requests you can run while the application is running. You can also use external tools like Postman 
 
 
 Technologies:
