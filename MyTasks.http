@@ -1,0 +1,51 @@
+@baseUrl = https://localhost:7082
+
+###### Create a task 
+POST {{baseUrl}}/api/tasks 
+Content-Type: application/json 
+{
+    "title": "test",
+    "description": "this is a test",
+    "category": "test 1"
+} 
+
+### Get all tasks 
+GET {{baseUrl}}/api/tasks
+Accept: application/json
+
+### Filter tasks by category
+GET {{baseUrl}}/api/tasks?category=test
+Accept: application/json
+
+### Filter tasks by status
+GET {{baseUrl}}/api/tasks?status=Pending
+Accept: application/json
+
+### Search for tasks
+GET {{baseUrl}}/api/tasks?search=test
+Accept: application/json
+
+### Sort tasks
+GET {{baseUrl}}/api/tasks?sortBy=title&ascending=true
+Accept: application/json
+
+### Pagination
+GET {{baseUrl}}/api/tasks?limit=5&offset=0
+Accept: application/json
+
+### Get a task by ID
+GET {{baseUrl}}/api/tasks/1
+
+### Update a task
+PUT {{baseUrl}}/api/tasks/1
+Content-Type: application/json 
+{
+    "title": "test",
+  "description": "this is another test",
+  "dueDate": "2287-11-11T04:50:58.4974874",
+    "category": "test 2",
+    "status": 1
+}
+
+### Delete a task
+DELETE {{baseUrl}}/api/tasks/1
