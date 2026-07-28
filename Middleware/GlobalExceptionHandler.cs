@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MyTasks.Exceptions
+namespace MyTasks.Middleware
 {
     internal sealed class GlobalExceptionHandler(IProblemDetailsService problemDetailsService, 
         ILogger<GlobalExceptionHandler> logger, 
