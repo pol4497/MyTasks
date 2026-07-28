@@ -3,11 +3,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MyTasks.Exceptions
 {
-    internal sealed class GlobalExceptionHandler(IProblemDetailsService problemDetailsService, ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
+    internal sealed class GlobalExceptionHandler(IProblemDetailsService problemDetailsService, 
+        ILogger<GlobalExceptionHandler> logger, 
+        IHostEnvironment env) : IExceptionHandler
     {
         public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception ex, CancellationToken cancellationToken)
         {
-            logger.LogError(ex, "Unhandled exception occured");
+            logger.LogError(ex, "Unhandled exception occurred");
+
+            var isDevelopment = env.IsDevelopment();
 
             httpContext.Response.StatusCode = ex switch
             {
@@ -30,7 +34,7 @@ namespace MyTasks.Exceptions
                         ArgumentException or InvalidOperationException => "Bad Request",
                         _ => "Internal Server Error"
                     },
-                    Detail = ex.Message,
+                    Detail = isDevelopment ? ex.Message : "Unhandled exception occurred"
                 }
             });
         }
