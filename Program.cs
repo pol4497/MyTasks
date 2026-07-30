@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using MyTasks.Exceptions;
+using MyTasks.Middleware;
 using MyTasks.Repositories;
 using System.Text.Json.Serialization;
 
