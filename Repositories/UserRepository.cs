@@ -1,0 +1,67 @@
+﻿using Microsoft.EntityFrameworkCore;
+using MyTasks.Data;
+using MyTasks.Models;
+
+namespace MyTasks.Repositories
+{
+    /// <summary>
+    /// Implementation of user and login-session data access operations.
+    /// </summary>
+    public class UserRepository(MyTasksContext _context) : IUserRepository
+    {
+        public async Task<User?> GetByIdAsync(int id)
+        {
+            return await _context.Users.FindAsync(id);
+        }
+
+        public async Task<User?> GetByUsernameAsync(string username)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(user => EF.Functions.Collate(user.Username, "NOCASE") == username);
+        }
+
+        public async Task<bool> UsernameExistsAsync(string username)
+        {
+            return await _context.Users
+                .AnyAsync(user => EF.Functions.Collate(user.Username, "NOCASE") == username);
+        }
+
+        public async Task<bool> EmailExistsAsync(string email)
+        {
+            return await _context.Users
+                .AnyAsync(user => EF.Functions.Collate(user.Email, "NOCASE") == email);
+        }
+
+        public async Task<bool> AnyAdminExistsAsync()
+        {
+            return await _context.Users.AnyAsync(u => u.Role == UserRole.Admin);
+        }
+
+        public void AddUser(User user)
+        {
+            _context.Users.Add(user);
+        }
+
+        public async Task<IReadOnlyList<User>> GetAllUsersAsync()
+        {
+            return await _context.Users.AsNoTracking().ToListAsync();
+        }
+
+        public void AddRefreshToken(RefreshToken token)
+        {
+            _context.RefreshTokens.Add(token);
+        }
+
+        public async Task<RefreshToken?> GetRefreshTokenByHashAsync(string tokenHash)
+        {
+            return await _context.RefreshTokens
+                .Include(token => token.User)
+                .FirstOrDefaultAsync(token => token.TokenHash == tokenHash);
+        }
+
+        public async Task<bool> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
+        }
+    }
+}
