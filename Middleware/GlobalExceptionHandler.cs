@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using MyTasks.Exceptions;
 
 namespace MyTasks.Middleware
 {
@@ -31,6 +32,8 @@ namespace MyTasks.Middleware
                     Title = ex switch
                     {
                         KeyNotFoundException => "Resource Not Found",
+                        UnauthorizedAccessException => "Unauthorized",
+                        ConflictException => "Conflict",
                         ArgumentException or InvalidOperationException => "Bad Request",
                         _ => "Internal Server Error"
                     },
