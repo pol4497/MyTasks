@@ -29,7 +29,7 @@ namespace MyTasks.Data
 
                 entity.HasOne(token => token.User)
                     .WithMany(user => user.RefreshTokens)
-                    .HasForeignKey(user => user.UserId)
+                    .HasForeignKey(token => token.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
         }
