@@ -1,0 +1,86 @@
+@baseUrl = https://localhost:7082
+
+###### Log in as Admin - captures the access token into {{authToken}} for every request below
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+    "username": "admin",
+    "password": "!Admin123!"
+}
+
+### 
+@authToken = {{login.response.body.$.accessToken}}
+@refreshToken = {{login.response.body.$.refreshToken}}
+
+### Logout - revokes the refresh token used to log in above
+POST {{baseUrl}}/api/auth/logout
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+    "refreshToken": "{{refreshToken}}"
+}
+
+###### Create a task 
+POST {{baseUrl}}/api/tasks 
+Content-Type: application/json 
+Authorization: Bearer {{authToken}}
+
+{
+    "title": "test",
+    "description": "this is a test",
+    "category": "test 1"
+} 
+
+### Get all tasks 
+GET {{baseUrl}}/api/tasks
+Accept: application/json
+Authorization: Bearer {{authToken}}
+
+### Filter tasks by category
+GET {{baseUrl}}/api/tasks?category=General
+Accept: application/json
+Authorization: Bearer {{authToken}}
+
+### Filter tasks by status
+GET {{baseUrl}}/api/tasks?status=Pending
+Accept: application/json
+Authorization: Bearer {{authToken}}
+
+### Search for tasks
+GET {{baseUrl}}/api/tasks?search=test
+Accept: application/json
+Authorization: Bearer {{authToken}}
+
+### Sort tasks
+GET {{baseUrl}}/api/tasks?sortBy=dueDate&ascending=true
+Accept: application/json
+Authorization: Bearer {{authToken}}
+
+### Pagination
+GET {{baseUrl}}/api/tasks?limit=5&offset=0
+Accept: application/json
+Authorization: Bearer {{authToken}}
+
+### Get a task by ID
+GET {{baseUrl}}/api/tasks/20
+Authorization: Bearer {{authToken}}
+
+### Update a task
+PUT {{baseUrl}}/api/tasks/20
+Content-Type: application/json 
+Authorization: Bearer {{authToken}}
+
+{
+    "title": "future test",
+  "description": "this is another test",
+  "dueDate": "2287-11-11T04:50:58.4974874",
+    "category": "test 2",
+    "status": 1
+}
+
+### Delete a task
+DELETE {{baseUrl}}/api/tasks/20
+Authorization: Bearer {{authToken}}
