@@ -18,5 +18,13 @@
         public TaskStatus Status { get; set; } = TaskStatus.Pending;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        // Exactly one owner is set for every newly created task:
+        // either an authenticated user or an anonymous guest session.
+        public int? UserId { get; set; }
+        public User? User { get; set; }
+
+        public int? GuestSessionId { get; set; }
+        public GuestSession? GuestSession { get; set; }
     }
 }
