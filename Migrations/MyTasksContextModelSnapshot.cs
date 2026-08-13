@@ -17,6 +17,33 @@ namespace MyTasks.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
 
+            modelBuilder.Entity("MyTasks.Models.GuestSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("LastAccessedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.ToTable("GuestSessions");
+                });
+
             modelBuilder.Entity("MyTasks.Models.RefreshToken", b =>
                 {
                     b.Property<int>("Id")
@@ -69,6 +96,9 @@ namespace MyTasks.Migrations
                     b.Property<DateTime?>("DueDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("GuestSessionId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
@@ -79,9 +109,19 @@ namespace MyTasks.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
-                    b.ToTable("TaskItems");
+                    b.HasIndex("GuestSessionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TaskItems", t =>
+                        {
+                            t.HasCheckConstraint("CK_TaskItem_OwnerXor", "((UserId IS NOT NULL AND GuestSessionId IS NULL) OR (UserId IS NULL AND GuestSessionId IS NOT NULL))");
+                        });
                 });
 
             modelBuilder.Entity("MyTasks.Models.User", b =>
@@ -130,9 +170,33 @@ namespace MyTasks.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MyTasks.Models.TaskItem", b =>
+                {
+                    b.HasOne("MyTasks.Models.GuestSession", "GuestSession")
+                        .WithMany("Tasks")
+                        .HasForeignKey("GuestSessionId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("MyTasks.Models.User", "User")
+                        .WithMany("Tasks")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("GuestSession");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MyTasks.Models.GuestSession", b =>
+                {
+                    b.Navigation("Tasks");
+                });
+
             modelBuilder.Entity("MyTasks.Models.User", b =>
                 {
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("Tasks");
                 });
 #pragma warning restore 612, 618
         }
