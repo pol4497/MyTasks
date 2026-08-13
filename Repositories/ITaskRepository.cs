@@ -11,12 +11,12 @@ namespace MyTasks.Repositories
         /// <summary>
         /// Retrieves tasks using filtering, sorting, and pagination options.
         /// </summary>
-        Task<IReadOnlyList<TaskItem>> GetTasksAsync(TaskItemDtos queryParams);
+        Task<IReadOnlyList<TaskItem>> GetTasksAsync(TaskItemDtos queryParams, int? userId, int? guestSessionId);
 
         /// <summary>
         /// Retrieves a task by its unique identifier.
         /// </summary>
-        Task<TaskItem?> GetTaskByIdAsync(int id);
+        Task<TaskItem?> GetTaskByIdAsync(int id, int? userId, int? guestSessionId);
 
         /// <summary>
         /// Adds a new task to the collection.
@@ -29,9 +29,11 @@ namespace MyTasks.Repositories
         void DeleteTask(TaskItem task);
 
         /// <summary>
-        /// Determines whether a task with the specified identifier exists in the collection.
+        /// Reassigns every task owned by the given guest session to a user instead - used
+        /// when a guest registers or logs in, so they don't lose what they created as a guest.
+        /// Returns the number of tasks reassigned.
         /// </summary>
-        bool TaskExists(int id);
+        Task<int> ClaimGuestTasksAsync(int guestSessionId, int userId);
 
         /// <summary>
         /// Asynchronously saves all changes made in the current context to the underlying database.

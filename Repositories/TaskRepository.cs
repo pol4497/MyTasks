@@ -13,9 +13,15 @@ namespace MyTasks.Repositories
         /// <summary>
         /// Retrieves tasks using optional filtering, sorting, and pagination.
         /// </summary>
-        public async Task<IReadOnlyList<TaskItem>> GetTasksAsync(TaskItemDtos queryParams)
+        public async Task<IReadOnlyList<TaskItem>> GetTasksAsync(TaskItemDtos queryParams, int? userId, int? guestSessionId)
         {
             IQueryable<TaskItem> query = _context.TaskItems.AsNoTracking();
+
+            query = userId.HasValue 
+                ? query.Where(t => t.UserId == userId.Value)
+                : guestSessionId.HasValue 
+                    ? query.Where(t => t.GuestSessionId == guestSessionId.Value)
+                    : query.Where(_ => false);
 
             if (queryParams == null)
             {
@@ -72,9 +78,25 @@ namespace MyTasks.Repositories
         /// Retrieves a task by its unique identifier.
         /// Returns null if not found.
         /// </summary>
-        public async Task<TaskItem?> GetTaskByIdAsync(int id)
+        public async Task<TaskItem?> GetTaskByIdAsync(int id, int? userId, int? guestSessionId)
         {
-            return await _context.TaskItems.FindAsync(id);
+            if (userId.HasValue)
+            {
+                return await _context.TaskItems
+                    .FirstOrDefaultAsync(t =>
+                        t.Id == id &&
+                        t.UserId == userId.Value);
+            }
+
+            if (guestSessionId.HasValue)
+            {
+                return await _context.TaskItems
+                    .FirstOrDefaultAsync(t =>
+                        t.Id == id &&
+                        t.GuestSessionId == guestSessionId.Value);
+            }
+
+            return null;
         }
 
         public void AddTask(TaskItem task)
@@ -87,9 +109,13 @@ namespace MyTasks.Repositories
             _context.TaskItems.Remove(task);
         }
 
-        public bool TaskExists(int id)
+        public async Task<int> ClaimGuestTasksAsync(int guestSessionId, int userId)
         {
-            return _context.TaskItems.Any(x =>  x.Id == id);
+            return await _context.TaskItems
+                .Where(t => t.GuestSessionId == guestSessionId)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(t => t.UserId, userId)
+                    .SetProperty(t => t.GuestSessionId, (int?)null));
         }
 
         /// <summary>
