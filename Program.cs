@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using MyTasks.Contexts;
 using MyTasks.Middleware;
 using MyTasks.Repositories;
 using MyTasks.Services;
@@ -30,12 +31,22 @@ builder.Services.AddControllers()
 // Add DbContext
 builder.Services.AddDbContext<MyTasks.Data.MyTasksContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("MyTasksContext") ?? "Data Source=MyTasks.db"));
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// Register repositories and services
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IGuestSessionRepository, GuestSessionRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IGuestTokenService, GuestTokenService>();
+builder.Services.AddScoped<IGuestSessionService, GuestSessionService>();
+builder.Services.AddScoped<ITaskOwnerResolver, TaskOwnerResolver>();
+
+builder.Services.AddScoped<ITaskOwnerContext,TaskOwnerContext>();
 
 // JWT authentication
 var jwtSection = builder.Configuration.GetSection("Jwt");
@@ -78,6 +89,8 @@ app.UseExceptionHandler();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+
+app.UseMiddleware<TaskOwnerMiddleware>();
 
 app.UseAuthorization();
 

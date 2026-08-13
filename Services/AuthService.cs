@@ -1,15 +1,62 @@
-﻿using MyTasks.Dtos;
-using MyTasks.Middleware;
+﻿using MyTasks.Contexts;
+using MyTasks.Dtos;
+using MyTasks.Exceptions;
 using MyTasks.Mappings;
 using MyTasks.Models;
 using MyTasks.Repositories;
 using MyTasks.Security;
-using MyTasks.Exceptions;
 
 namespace MyTasks.Services
 {
-    public class AuthService(IUserRepository _users, ITokenService _tokens) : IAuthService
+    public class AuthService(
+        IUserRepository _users,
+        ITokenService _tokens,
+        ITaskRepository _tasks,
+        IGuestSessionRepository _guestSessions,
+        ITaskOwnerContext _ownerContext
+        ) : IAuthService
     {
+        private async Task<AuthResponseDto> IssueTokensAsync(User user)
+        {
+            var accessToken = _tokens.GenerateAccessToken(user);
+            var refreshToken = _tokens.GenerateRefreshToken();
+
+            var refreshTokenEntity = new RefreshToken
+            {
+                TokenHash = _tokens.HashRefreshToken(refreshToken.Value),
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = refreshToken.ExpiresAt,
+                UserId = user.Id
+            };
+
+            _users.AddRefreshToken(refreshTokenEntity);
+            await _users.SaveChangesAsync();
+
+            return new AuthResponseDto
+            {
+                AccessToken = accessToken.Value,
+                AccessTokenExpiresAt = accessToken.ExpiresAt,
+                RefreshToken = refreshToken.Value,
+                RefreshTokenExpiresAt = refreshToken.ExpiresAt,
+                User = user.ToReadDto()
+            };
+        }
+
+        /// <summary>
+        /// If the current request is presenting a valid guest session, transfers that
+        /// session's tasks to the given (newly registered or just-logged-in) user, then
+        /// invalidates the guest session so a leftover X-Guest-Token can't reuse it.
+        /// </summary>
+        private async Task ClaimGuestTasksIfAnyAsync(int userId)
+        {
+            if (!_ownerContext.IsGuest) return;
+
+            var guestSessionId = _ownerContext.GuestSessionId!.Value;
+
+            await _tasks.ClaimGuestTasksAsync(guestSessionId, userId);
+            await _guestSessions.InvalidateAsync(guestSessionId);
+        }
+
         public async Task<UserReadDto> RegisterAsync(RegisterDto dto)
         {
             if (await _users.UsernameExistsAsync(dto.Username))
@@ -34,6 +81,8 @@ namespace MyTasks.Services
             _users.AddUser(user);
             await _users.SaveChangesAsync();
 
+            await ClaimGuestTasksIfAnyAsync(user.Id);
+
             return user.ToReadDto();
         }
 
@@ -45,6 +94,8 @@ namespace MyTasks.Services
             {
                 throw new UnauthorizedAccessException("Invalid username or password.");
             }
+
+            await ClaimGuestTasksIfAnyAsync(user.Id);
 
             return await IssueTokensAsync(user);
         }
@@ -78,32 +129,6 @@ namespace MyTasks.Services
 
             existingToken.RevokedAt = DateTime.UtcNow;
             await _users.SaveChangesAsync();
-        }
-
-        private async Task<AuthResponseDto> IssueTokensAsync(User user)
-        {
-            var accessToken = _tokens.GenerateAccessToken(user);
-            var refreshToken = _tokens.GenerateRefreshToken();
-
-            var refreshTokenEntity = new RefreshToken
-            {
-                TokenHash = _tokens.HashRefreshToken(refreshToken.Value),
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = refreshToken.ExpiresAt,
-                UserId = user.Id
-            };
-
-            _users.AddRefreshToken(refreshTokenEntity);
-            await _users.SaveChangesAsync();
-
-            return new AuthResponseDto
-            {
-                AccessToken = accessToken.Value,
-                AccessTokenExpiresAt = accessToken.ExpiresAt,
-                RefreshToken = refreshToken.Value,
-                RefreshTokenExpiresAt = refreshToken.ExpiresAt,
-                User = user.ToReadDto()
-            };
         }
     }
 }
