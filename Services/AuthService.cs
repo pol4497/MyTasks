@@ -92,7 +92,7 @@ namespace MyTasks.Services
 
             if (user == null || !PasswordHasher.Verify(dto.Password, user.PasswordHash))
             {
-                throw new UnauthorizedAccessException("Invalid username or password.");
+                throw new UnauthorizedException("Invalid username or password.");
             }
 
             await ClaimGuestTasksIfAnyAsync(user.Id);
@@ -107,7 +107,7 @@ namespace MyTasks.Services
 
             if (existingToken == null || !existingToken.IsActive)
             {
-                throw new UnauthorizedAccessException("Refresh token is invalid or expired.");
+                throw new UnauthorizedException("Refresh token is invalid or expired.");
             }
 
             // Rotate: revoke the used token and issue a brand new pair.

@@ -1,9 +1,10 @@
-﻿using System.Security.Claims;
+﻿using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
+using MyTasks.Exceptions;
+using MyTasks.Models;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.IdentityModel.Tokens;
-using MyTasks.Models;
 
 namespace MyTasks.Services
 {
@@ -17,7 +18,7 @@ namespace MyTasks.Services
         {
             var jwtSection = _config.GetSection("Jwt");
             var key = jwtSection["Key"]
-                ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+                ?? throw new ConfigurationException("Jwt:Key is not configured.");
             var issuer = jwtSection["Issuer"];
             var audience = jwtSection["Audience"];
             var minutes = jwtSection.GetValue<int?>("AccessTokenMinutes") ?? 15;

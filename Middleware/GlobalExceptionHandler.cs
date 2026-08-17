@@ -16,8 +16,10 @@ namespace MyTasks.Middleware
 
             httpContext.Response.StatusCode = ex switch
             {
-                KeyNotFoundException => StatusCodes.Status404NotFound,
-                ArgumentException or InvalidOperationException => StatusCodes.Status400BadRequest,
+                BadRequestException => StatusCodes.Status400BadRequest,
+                UnauthorizedException => StatusCodes.Status401Unauthorized,
+                NotFoundException => StatusCodes.Status404NotFound,
+                ConflictException => StatusCodes.Status409Conflict,
                 _ => StatusCodes.Status500InternalServerError
             };
 
@@ -31,10 +33,10 @@ namespace MyTasks.Middleware
                     Type = ex.GetType().Name,
                     Title = ex switch
                     {
-                        KeyNotFoundException => "Resource Not Found",
-                        UnauthorizedAccessException => "Unauthorized",
+                        NotFoundException => "Resource Not Found",
+                        UnauthorizedException => "Unauthorized",
                         ConflictException => "Conflict",
-                        ArgumentException or InvalidOperationException => "Bad Request",
+                        BadRequestException => "Bad Request",
                         _ => "Internal Server Error"
                     },
                     Detail = isDevelopment ? ex.Message : "Unhandled exception occurred"

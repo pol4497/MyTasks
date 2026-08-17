@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyTasks.Contexts;
+using MyTasks.Exceptions;
 using MyTasks.Middleware;
 using MyTasks.Repositories;
 using MyTasks.Services;
@@ -51,7 +52,7 @@ builder.Services.AddScoped<ITaskOwnerContext,TaskOwnerContext>();
 // JWT authentication
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var jwtKey = jwtSection["Key"]
-    ?? throw new InvalidOperationException("Jwt:Key is not configured. Set it in appsettings.json or user secrets.");
+    ?? throw new ConfigurationException("Jwt:Key is not configured. Set it in appsettings.json or user secrets.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
