@@ -8,7 +8,7 @@ namespace MyTasks.Repositories
     /// <summary>
     /// Implementation of task data access operations.
     /// </summary>
-    public class TaskRepository(MyTasksContext _context) : ITaskRepository
+    public class TaskRepository(MyTasksContext context) : RepositoryBase(context), ITaskRepository
     {
         /// <summary>
         /// Retrieves tasks using optional filtering, sorting, and pagination.
@@ -116,14 +116,6 @@ namespace MyTasks.Repositories
                 .ExecuteUpdateAsync(s => s
                     .SetProperty(t => t.UserId, userId)
                     .SetProperty(t => t.GuestSessionId, (int?)null));
-        }
-
-        /// <summary>
-        /// Saves changes to the database.
-        /// </summary>
-        public async Task<bool> SaveChangesAsync()
-        {
-            return await _context.SaveChangesAsync() > 0;
         }
     }
 }

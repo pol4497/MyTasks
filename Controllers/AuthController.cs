@@ -1,6 +1,6 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MyTasks.Contexts;
 using MyTasks.Dtos;
 using MyTasks.Mappings;
 using MyTasks.Repositories;
@@ -10,7 +10,10 @@ namespace MyTasks.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController(IAuthService _auth, IUserRepository _users) : ControllerBase
+    public class AuthController(
+        IAuthService _auth,
+        IUserRepository _users,
+        ITaskOwnerContext _ownerContext) : ControllerBase
     {
         /// <summary>
         /// Registers a new user account.
@@ -71,13 +74,12 @@ namespace MyTasks.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<UserReadDto>> GetCurrentUser()
         {
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdClaim, out var userId))
+            if (!_ownerContext.UserId.HasValue)
             {
                 return Unauthorized();
             }
 
-            var user = await _users.GetByIdAsync(userId);
+            var user = await _users.GetByIdAsync(_ownerContext.UserId.Value);
             if (user == null) return NotFound();
 
             return Ok(user.ToReadDto());

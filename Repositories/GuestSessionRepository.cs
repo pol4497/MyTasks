@@ -4,7 +4,7 @@ using MyTasks.Models;
 
 namespace MyTasks.Repositories
 {
-    public class GuestSessionRepository(MyTasksContext _context) : IGuestSessionRepository
+    public class GuestSessionRepository(MyTasksContext context) : RepositoryBase(context), IGuestSessionRepository
     {
         public async Task<GuestSession?> GetByTokenHashAsync(string tokenHash)
         {
@@ -23,12 +23,7 @@ namespace MyTasks.Repositories
             if (session == null) return;
 
             session.ExpiresAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<bool> SaveChangesAsync()
-        {
-            return await _context.SaveChangesAsync() > 0;
+            await SaveChangesAsync();
         }
     }
 }

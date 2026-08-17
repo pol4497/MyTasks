@@ -7,7 +7,7 @@ namespace MyTasks.Repositories
     /// <summary>
     /// Implementation of user and login-session data access operations.
     /// </summary>
-    public class UserRepository(MyTasksContext _context) : IUserRepository
+    public class UserRepository(MyTasksContext context) : RepositoryBase(context), IUserRepository
     {
         public async Task<User?> GetByIdAsync(int id)
         {
@@ -57,11 +57,6 @@ namespace MyTasks.Repositories
             return await _context.RefreshTokens
                 .Include(token => token.User)
                 .FirstOrDefaultAsync(token => token.TokenHash == tokenHash);
-        }
-
-        public async Task<bool> SaveChangesAsync()
-        {
-            return await _context.SaveChangesAsync() > 0;
         }
     }
 }
