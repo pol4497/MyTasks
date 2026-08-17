@@ -42,6 +42,8 @@ builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IGuestSessionRepository, GuestSessionRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ITokenCleanupService, TokenCleanupService>();
+builder.Services.AddHostedService<TokenCleanupBackgroundService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IGuestTokenService, GuestTokenService>();
 builder.Services.AddScoped<IGuestSessionService, GuestSessionService>();
