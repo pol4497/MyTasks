@@ -1,4 +1,6 @@
-﻿using MyTasks.Contexts;
+﻿using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using MyTasks.Contexts;
 using MyTasks.Dtos;
 using MyTasks.Exceptions;
 using MyTasks.Mappings;
@@ -16,6 +18,8 @@ namespace MyTasks.Services
         ITaskOwnerContext _ownerContext
         ) : IAuthService
     {
+        private static string Normalize(string value) => value.Trim();
+
         private async Task<AuthResponseDto> IssueTokensAsync(User user)
         {
             var accessToken = _tokens.GenerateAccessToken(user);
@@ -59,27 +63,39 @@ namespace MyTasks.Services
 
         public async Task<UserReadDto> RegisterAsync(RegisterDto dto)
         {
-            if (await _users.UsernameExistsAsync(dto.Username))
+            var username = Normalize(dto.Username);
+            var email = Normalize(dto.Email);
+
+            if (await _users.UsernameExistsAsync(Normalize(username)))
             {
                 throw new ConflictException("Username is already taken.");
             }
 
-            if (await _users.EmailExistsAsync(dto.Email))
+            if (await _users.EmailExistsAsync(email))
             {
                 throw new ConflictException("Email is already registered.");
             }
 
             var user = new User
             {
-                Username = dto.Username,
-                Email = dto.Email,
+                Username = username,
+                Email = email,
                 PasswordHash = PasswordHasher.Hash(dto.Password),
                 Role = UserRole.User,
                 CreatedAt = DateTime.UtcNow
             };
 
             _users.AddUser(user);
-            await _users.SaveChangesAsync();
+
+            try
+            {
+                await _users.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is SqliteException { SqliteErrorCode: 19 })
+            {
+
+                throw new ConflictException("Username or email is already taken.");
+            }
 
             await ClaimGuestTasksIfAnyAsync(user.Id);
 
@@ -88,7 +104,8 @@ namespace MyTasks.Services
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
         {
-            var user = await _users.GetByUsernameAsync(dto.Username);
+            var username = Normalize(dto.Username);
+            var user = await _users.GetByUsernameAsync(username);
 
             if (user == null || !PasswordHasher.Verify(dto.Password, user.PasswordHash))
             {
