@@ -20,6 +20,9 @@ namespace MyTasks.Data
 
             modelBuilder.Entity<User>(entity =>
             {
+                entity.Property(u => u.Username).UseCollation("NOCASE");
+                entity.Property(u => u.Email).UseCollation("NOCASE");
+
                 entity.HasIndex(user => user.Username).IsUnique();
                 entity.HasIndex(user => user.Email).IsUnique();
             });
