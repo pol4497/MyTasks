@@ -10,15 +10,26 @@ namespace MyTasks.Repositories
     /// </summary>
     public class TaskRepository(MyTasksContext context) : RepositoryBase(context), ITaskRepository
     {
-        public async Task<IReadOnlyList<TaskItem>> GetTasksAsync(TaskItemDtos queryParams, int? userId, int? guestSessionId)
+        /// <summary>
+        /// Scopes a task query to whichever owner applies (a user or a guest session).
+        /// Neither set means the caller has no resolved owner - returns an empty query
+        /// rather than an error, since callers already enforce that ownership is required
+        /// before reaching the repository (see TaskOwnerRequiredFilter).
+        /// </summary>
+        private IQueryable<TaskItem> ScopedToOwner(int? userId, int? guestSessionId)
         {
-            IQueryable<TaskItem> query = _context.TaskItems.AsNoTracking();
+            IQueryable<TaskItem> query = _context.TaskItems;
 
-            query = userId.HasValue 
+            return userId.HasValue
                 ? query.Where(t => t.UserId == userId.Value)
-                : guestSessionId.HasValue 
+                : guestSessionId.HasValue
                     ? query.Where(t => t.GuestSessionId == guestSessionId.Value)
                     : query.Where(_ => false);
+        }
+
+        public async Task<IReadOnlyList<TaskItem>> GetTasksAsync(TaskItemDtos queryParams, int? userId, int? guestSessionId)
+        {
+            IQueryable<TaskItem> query = ScopedToOwner(userId, guestSessionId).AsNoTracking();
 
             if (queryParams == null)
             {
@@ -73,23 +84,8 @@ namespace MyTasks.Repositories
 
         public async Task<TaskItem?> GetTaskByIdAsync(int id, int? userId, int? guestSessionId)
         {
-            if (userId.HasValue)
-            {
-                return await _context.TaskItems
-                    .FirstOrDefaultAsync(t =>
-                        t.Id == id &&
-                        t.UserId == userId.Value);
-            }
-
-            if (guestSessionId.HasValue)
-            {
-                return await _context.TaskItems
-                    .FirstOrDefaultAsync(t =>
-                        t.Id == id &&
-                        t.GuestSessionId == guestSessionId.Value);
-            }
-
-            return null;
+            return await ScopedToOwner(userId, guestSessionId)
+                .FirstOrDefaultAsync(t => t.Id == id);
         }
 
         public void AddTask(TaskItem task)
