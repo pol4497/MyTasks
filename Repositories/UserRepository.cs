@@ -58,5 +58,16 @@ namespace MyTasks.Repositories
                 .Include(token => token.User)
                 .FirstOrDefaultAsync(token => token.TokenHash == tokenHash);
         }
+
+        public async Task<bool> TryConsumeRefreshTokenAsync(int tokenId, DateTime now)
+        {
+            var rowsAffected = await _context.RefreshTokens
+                .Where(t => t.Id == tokenId && 
+                t.RevokedAt == null &&
+                t.ExpiresAt > now)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, now));
+
+            return rowsAffected == 1;
+        }
     }
 }

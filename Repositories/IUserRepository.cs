@@ -18,6 +18,13 @@ namespace MyTasks.Repositories
         void AddRefreshToken(RefreshToken token);
         Task<RefreshToken?> GetRefreshTokenByHashAsync(string tokenHash);
 
+        /// <summary>
+        /// Atomically consumes a refresh token, but only if it's still active. Returns false if
+        /// it was already revoked or expired by the time this runs - which means a concurrent
+        /// request already claimed it, so this caller must not proceed with rotation.
+        /// </summary>
+        Task<bool> TryConsumeRefreshTokenAsync(int tokenId, DateTime now);
+
         Task<bool> SaveChangesAsync();
     }
 }

@@ -105,13 +105,19 @@ namespace MyTasks.Services
             var hash = _tokens.HashRefreshToken(rawRefreshToken);
             var existingToken = await _users.GetRefreshTokenByHashAsync(hash);
 
-            if (existingToken == null || !existingToken.IsActive)
+            if (existingToken == null)
             {
                 throw new UnauthorizedException("Refresh token is invalid or expired.");
             }
 
-            // Rotate: revoke the used token and issue a brand new pair.
-            existingToken.RevokedAt = DateTime.UtcNow;
+            var now = DateTime.UtcNow;
+            var consumed = await _users.TryConsumeRefreshTokenAsync(existingToken.Id, DateTime.UtcNow);
+
+            if (!consumed)
+            {
+                // Someone else already rotated this token concurrently - reject, don't issue a second child.
+                throw new UnauthorizedException("Refresh token is invalid or expired.");
+            }
 
             return await IssueTokensAsync(existingToken.User);
         }
