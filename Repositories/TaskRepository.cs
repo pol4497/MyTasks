@@ -10,9 +10,6 @@ namespace MyTasks.Repositories
     /// </summary>
     public class TaskRepository(MyTasksContext context) : RepositoryBase(context), ITaskRepository
     {
-        /// <summary>
-        /// Retrieves tasks using optional filtering, sorting, and pagination.
-        /// </summary>
         public async Task<IReadOnlyList<TaskItem>> GetTasksAsync(TaskItemDtos queryParams, int? userId, int? guestSessionId)
         {
             IQueryable<TaskItem> query = _context.TaskItems.AsNoTracking();
@@ -74,10 +71,6 @@ namespace MyTasks.Repositories
             return await query.ToListAsync();
         }
 
-        /// <summary>
-        /// Retrieves a task by its unique identifier.
-        /// Returns null if not found.
-        /// </summary>
         public async Task<TaskItem?> GetTaskByIdAsync(int id, int? userId, int? guestSessionId)
         {
             if (userId.HasValue)
