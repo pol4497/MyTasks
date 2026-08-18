@@ -361,8 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/MyTasks.db
-/MyTasks.db
 *.db-wal
 *.db-shm
 *.sqbpro
