@@ -40,7 +40,6 @@ namespace MyTasks.Dtos
         [StringLength(100)]
         public string Category { get; init; } = string.Empty;
 
-        [Required]
         public TaskStatus Status { get; init; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -59,7 +58,7 @@ namespace MyTasks.Dtos
         public string Description { get; init; } = string.Empty;
         public DateTime? DueDate { get; init; }
         public string Category { get; init; } = string.Empty;
-        public string Status { get; init; }
+        public string Status { get; init; } = string.Empty;
         public DateTime CreatedAt { get; init; }
         public DateTime UpdatedAt { get; init; }
     }
