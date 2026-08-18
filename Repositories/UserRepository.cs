@@ -17,19 +17,19 @@ namespace MyTasks.Repositories
         public async Task<User?> GetByUsernameAsync(string username)
         {
             return await _context.Users
-                .FirstOrDefaultAsync(user => EF.Functions.Collate(user.Username, "NOCASE") == username);
+                .FirstOrDefaultAsync(user => user.Username == username);
         }
 
         public async Task<bool> UsernameExistsAsync(string username)
         {
             return await _context.Users
-                .AnyAsync(user => EF.Functions.Collate(user.Username, "NOCASE") == username);
+                .AnyAsync(user => user.Username == username);
         }
 
         public async Task<bool> EmailExistsAsync(string email)
         {
             return await _context.Users
-                .AnyAsync(user => EF.Functions.Collate(user.Email, "NOCASE") == email);
+                .AnyAsync(user => user.Email == email);
         }
 
         public async Task<bool> AnyAdminExistsAsync()
