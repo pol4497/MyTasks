@@ -66,7 +66,7 @@ namespace MyTasks.Services
             var username = Normalize(dto.Username);
             var email = Normalize(dto.Email);
 
-            if (await _users.UsernameExistsAsync(Normalize(username)))
+            if (await _users.UsernameExistsAsync(username))
             {
                 throw new ConflictException("Username is already taken.");
             }
