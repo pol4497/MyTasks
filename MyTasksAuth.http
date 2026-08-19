@@ -1,7 +1,52 @@
 @baseUrl = https://localhost:7082
 
+########## GUEST OPERATIONS ##########
+### Placed first - {{guestToken}} is consumed by both the guest task requests below
+### AND by the "log in as user" block further down, to test the claim-on-login flow.
+
+###### Create a guest session - captures the token into {{guestToken}}
+# @name guestSession
+POST {{baseUrl}}/api/guest/session
+
+###
+@guestToken = {{guestSession.response.body.$.guestToken}}
+
+### Create a task as a guest
+POST {{baseUrl}}/api/tasks
+Content-Type: application/json
+X-Guest-Token: {{guestToken}}
+
+{
+    "title": "guest test",
+    "description": "created without an account",
+    "category": "test"
+}
+
+### Get tasks as a guest
+GET {{baseUrl}}/api/tasks
+Accept: application/json
+X-Guest-Token: {{guestToken}}
+
+### Delete a task as a guest
+DELETE {{baseUrl}}/api/tasks/24
+X-Guest-Token: {{guestToken}}
+
+
+########## AUTH OPERATIONS ##########
+
+### Register a new user (plain - does not claim any guest tasks)
+### Use -> X-Guest-Token: {{guestToken}} if you want to claim any tasks created under the guest session.
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "guestToUser1",
+    "email": "guestToUser1@test.local",
+    "password": "guestToUser1"
+}
+
 ###### Log in as Admin - captures the access token into {{authToken}} for every request below
-# @name login
+# @name loginAdmin
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -10,9 +55,21 @@ Content-Type: application/json
     "password": "!Admin123!"
 }
 
-### 
-@authToken = {{login.response.body.$.accessToken}}
-@refreshToken = {{login.response.body.$.refreshToken}}
+###### Log in as user, presenting X-Guest-Token - claims any tasks created under
+###### {{guestToken}} into this account, then invalidates the guest session.
+# @name loginUser
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+X-Guest-Token: {{guestToken}}
+
+{
+    "username": "guestToUser1",
+    "password": "guestToUser1"
+}
+
+### Capture tokens from whichever login above you just ran (loginAdmin or loginUser)
+@authToken = {{loginAdmin.response.body.$.accessToken}}
+@refreshToken = {{loginAdmin.response.body.$.refreshToken}}
 
 ### Logout - revokes the refresh token used to log in above
 POST {{baseUrl}}/api/auth/logout
@@ -23,18 +80,21 @@ Authorization: Bearer {{authToken}}
     "refreshToken": "{{refreshToken}}"
 }
 
-###### Create a task 
-POST {{baseUrl}}/api/tasks 
-Content-Type: application/json 
+
+########## TASK OPERATIONS (as authenticated user) ##########
+
+### Create a task
+POST {{baseUrl}}/api/tasks
+Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
     "title": "test",
     "description": "this is a test",
     "category": "test 1"
-} 
+}
 
-### Get all tasks 
+### Get all tasks
 GET {{baseUrl}}/api/tasks
 Accept: application/json
 Authorization: Bearer {{authToken}}
@@ -65,18 +125,18 @@ Accept: application/json
 Authorization: Bearer {{authToken}}
 
 ### Get a task by ID
-GET {{baseUrl}}/api/tasks/20
+GET {{baseUrl}}/api/tasks/22
 Authorization: Bearer {{authToken}}
 
 ### Update a task
-PUT {{baseUrl}}/api/tasks/20
-Content-Type: application/json 
+PUT {{baseUrl}}/api/tasks/22
+Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
     "title": "future test",
-  "description": "this is another test",
-  "dueDate": "2287-11-11T04:50:58.4974874",
+    "description": "this is another test",
+    "dueDate": "2287-11-11T04:50:58.4974874",
     "category": "test 2",
     "status": 1
 }
