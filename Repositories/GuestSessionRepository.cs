@@ -9,6 +9,7 @@ namespace MyTasks.Repositories
         public async Task<GuestSession?> GetByTokenHashAsync(string tokenHash)
         {
             return await _context.GuestSessions
+                .AsNoTracking()
                 .FirstOrDefaultAsync(session => session.TokenHash == tokenHash);
         }
 
@@ -17,13 +18,20 @@ namespace MyTasks.Repositories
             _context.GuestSessions.Add(session);
         }
 
-        public async Task InvalidateAsync(int guestSessionId)
+        public async Task TouchAsync(int guestSessionId, DateTime now)
         {
-            var session = await _context.GuestSessions.FindAsync(guestSessionId);
-            if (session == null) return;
+            await _context.GuestSessions
+                .Where(session => session.Id == guestSessionId && session.ExpiresAt > now)
+                .ExecuteUpdateAsync(update => update.SetProperty(session => session.LastAccessedAt, now));
+        }
 
-            session.ExpiresAt = DateTime.UtcNow;
-            await SaveChangesAsync();
+        public async Task<bool> TryConsumeAsync(int guestSessionId, DateTime now)
+        {
+            var rowsAffected = await _context.GuestSessions
+                .Where(session => session.Id == guestSessionId && session.ExpiresAt > now)
+                .ExecuteUpdateAsync(update => update.SetProperty(session => session.ExpiresAt, now));
+
+            return rowsAffected == 1;
         }
     }
 }

@@ -49,8 +49,7 @@ namespace MyTasks.Services
             if (session == null || !session.IsActive)
                 return false;
 
-            session.LastAccessedAt = DateTime.UtcNow;
-            await guestSessions.SaveChangesAsync();
+            await guestSessions.TouchAsync(session.Id, DateTime.UtcNow);
 
             ownerContext.SetGuest(session.Id);
 
