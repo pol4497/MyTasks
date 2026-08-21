@@ -1,7 +1,6 @@
 ﻿namespace MyTasks.Services
 {
-    public interface ITokenCleanupService
+    public interface ITokenCleanupService : ICleanupService
     {
-        Task<int> CleanupAsync(CancellationToken cancellationToken);
     }
 }

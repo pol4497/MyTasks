@@ -44,13 +44,26 @@ builder.Services.AddScoped<IGuestSessionRepository, GuestSessionRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ITokenCleanupService, TokenCleanupService>();
-builder.Services.AddHostedService<TokenCleanupBackgroundService>();
+builder.Services.AddScoped<IGuestSessionCleanupService, GuestSessionCleanupService>();
+
+builder.Services.AddSingleton<IHostedService>(sp => new PeriodicCleanupBackgroundService<ITokenCleanupService>(
+    sp.GetRequiredService<IServiceScopeFactory>(),
+    sp.GetRequiredService<ILogger<PeriodicCleanupBackgroundService<ITokenCleanupService>>>(),
+    TimeSpan.FromHours(1),
+    "old refresh tokens"));
+
+builder.Services.AddSingleton<IHostedService>(sp => new PeriodicCleanupBackgroundService<IGuestSessionCleanupService>(
+    sp.GetRequiredService<IServiceScopeFactory>(),
+    sp.GetRequiredService<ILogger<PeriodicCleanupBackgroundService<IGuestSessionCleanupService>>>(),
+    TimeSpan.FromHours(1),
+    "expired guest sessions"));
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IGuestTokenService, GuestTokenService>();
 builder.Services.AddScoped<IGuestSessionService, GuestSessionService>();
 builder.Services.AddScoped<ITaskOwnerResolver, TaskOwnerResolver>();
 
-builder.Services.AddScoped<ITaskOwnerContext,TaskOwnerContext>();
+builder.Services.AddScoped<ITaskOwnerContext, TaskOwnerContext>();
 
 // JWT authentication
 var jwtSection = builder.Configuration.GetSection("Jwt");
