@@ -23,4 +23,9 @@
     <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="MyTasks.UnitTests/**/*.cs" />
+    <Compile Remove="MyTasks.IntegrationTests/**/*.cs" />
+  </ItemGroup>
+
 </Project>

@@ -46,17 +46,20 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ITokenCleanupService, TokenCleanupService>();
 builder.Services.AddScoped<IGuestSessionCleanupService, GuestSessionCleanupService>();
 
-builder.Services.AddSingleton<IHostedService>(sp => new PeriodicCleanupBackgroundService<ITokenCleanupService>(
+if(!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddSingleton<IHostedService>(sp => new PeriodicCleanupBackgroundService<ITokenCleanupService>(
     sp.GetRequiredService<IServiceScopeFactory>(),
     sp.GetRequiredService<ILogger<PeriodicCleanupBackgroundService<ITokenCleanupService>>>(),
     TimeSpan.FromHours(1),
     "old refresh tokens"));
 
-builder.Services.AddSingleton<IHostedService>(sp => new PeriodicCleanupBackgroundService<IGuestSessionCleanupService>(
-    sp.GetRequiredService<IServiceScopeFactory>(),
-    sp.GetRequiredService<ILogger<PeriodicCleanupBackgroundService<IGuestSessionCleanupService>>>(),
-    TimeSpan.FromHours(1),
-    "expired guest sessions"));
+    builder.Services.AddSingleton<IHostedService>(sp => new PeriodicCleanupBackgroundService<IGuestSessionCleanupService>(
+        sp.GetRequiredService<IServiceScopeFactory>(),
+        sp.GetRequiredService<ILogger<PeriodicCleanupBackgroundService<IGuestSessionCleanupService>>>(),
+        TimeSpan.FromHours(1),
+        "expired guest sessions"));
+}
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IGuestTokenService, GuestTokenService>();
@@ -114,3 +117,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Makes Program accessible to WebApplicationFactory<Program> -
+// top-level statements generate this class as internal by default.
+public partial class Program { }
