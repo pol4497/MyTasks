@@ -365,3 +365,4 @@ FodyWeavers.xsd
 *.db-wal
 *.db-shm
 *.sqbpro
+/MyTasks.db
