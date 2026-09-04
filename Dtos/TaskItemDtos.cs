@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MyTasks.Exceptions;
+using System.ComponentModel.DataAnnotations;
 using TaskStatus = MyTasks.Models.TaskStatus;
 
 namespace MyTasks.Dtos
@@ -47,6 +48,11 @@ namespace MyTasks.Dtos
             if (DueDate.HasValue && DueDate.Value.Date < DateTime.UtcNow.Date)
             {
                 yield return new ValidationResult("DueDate cannot be in the past.", new[] { nameof(DueDate) });
+            }
+
+            if (!Enum.IsDefined(typeof(TaskStatus), Status))
+            {
+                throw new BadRequestException("Invalid task status.");
             }
         }
     }
