@@ -58,11 +58,34 @@ public static class TestAuthHelper
         Assert.False(string.IsNullOrWhiteSpace(auth.AccessToken));
         Assert.False(string.IsNullOrWhiteSpace(auth.RefreshToken));
 
+        // Store the access token on the client so subsequent requests are authenticated as this user.
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue(
                 "Bearer",
                 auth.AccessToken);
 
+        // Remove any previous guest token because this client is now acting as a registered user.
+        client.DefaultRequestHeaders.Remove("X-Guest-Token");
+
         return auth;
+    }
+
+    /// <summary>
+    /// Remove both authentication mechanisms so the client represents an unauthenticated caller.
+    /// </summary>
+    public static void ClearAuthentication(HttpClient client)
+    {
+        client.DefaultRequestHeaders.Authorization = null;
+        client.DefaultRequestHeaders.Remove("X-Guest-Token");
+    }
+
+    /// <summary>
+    /// Switch the client from user authentication to guest authentication.
+    /// </summary>
+    public static void UseGuestToken(HttpClient client, string guestToken)
+    {
+        client.DefaultRequestHeaders.Authorization = null;
+        client.DefaultRequestHeaders.Remove("X-Guest-Token");
+        client.DefaultRequestHeaders.Add("X-Guest-Token", guestToken);
     }
 }
