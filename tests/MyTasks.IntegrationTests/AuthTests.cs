@@ -378,7 +378,7 @@ public class AuthTests(MyTasksWebApplicationFactory factory) : IClassFixture<MyT
 
         // Login again so the newly-issued JWT contains Role=Admin.
         var loginResponse = await _client.PostAsJsonAsync(
-            "/api/Auth/login",
+            "/api/auth/login",
             new LoginDto
             {
                 Username = username,
