@@ -41,6 +41,7 @@ namespace MyTasks.Dtos
         [StringLength(100)]
         public string Category { get; init; } = string.Empty;
 
+        [EnumDataType(typeof(TaskStatus))]
         public TaskStatus Status { get; init; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -48,11 +49,6 @@ namespace MyTasks.Dtos
             if (DueDate.HasValue && DueDate.Value.Date < DateTime.UtcNow.Date)
             {
                 yield return new ValidationResult("DueDate cannot be in the past.", new[] { nameof(DueDate) });
-            }
-
-            if (!Enum.IsDefined(typeof(TaskStatus), Status))
-            {
-                throw new BadRequestException("Invalid task status.");
             }
         }
     }
