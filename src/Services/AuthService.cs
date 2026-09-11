@@ -160,14 +160,21 @@ namespace MyTasks.Services
             return await IssueTokensAsync(existingToken.User);
         }
 
-        public async Task LogoutAsync(string rawRefreshToken)
+        public async Task LogoutAsync(int? userId, string rawRefreshToken)
         {
+            if (userId == null)
+            {
+                throw new UnauthorizedException("User ID is required to logout.");
+            }
+
             var hash = _tokens.HashRefreshToken(rawRefreshToken);
             var existingToken = await _users.GetRefreshTokenByHashAsync(hash);
 
-            if (existingToken == null || !existingToken.IsActive)
+            // Already logged out / unknown token - logout is idempotent / wrong user id
+            if (existingToken == null || 
+                !existingToken.IsActive ||
+                existingToken.UserId != userId.Value)
             {
-                // Already logged out / unknown token - logout is idempotent, nothing to do.
                 return;
             }
 

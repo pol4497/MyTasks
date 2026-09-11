@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MyTasks.Contexts;
 using MyTasks.Dtos;
+using MyTasks.Exceptions;
 using MyTasks.Mappings;
 using MyTasks.Repositories;
 using MyTasks.Services;
@@ -61,7 +62,9 @@ namespace MyTasks.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> Logout([FromBody] RefreshRequestDto dto)
         {
-            await _auth.LogoutAsync(dto.RefreshToken);
+            var userId = _ownerContext.UserId;
+
+            await _auth.LogoutAsync(userId, dto.RefreshToken);
             return NoContent();
         }
 

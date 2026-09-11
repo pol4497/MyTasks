@@ -7,6 +7,6 @@ namespace MyTasks.Services
         Task<UserReadDto> RegisterAsync(RegisterDto dto);
         Task<AuthResponseDto> LoginAsync(LoginDto dto);
         Task<AuthResponseDto> RefreshAsync(string rawRefreshToken);
-        Task LogoutAsync(string rawRefreshToken);
+        Task LogoutAsync(int? userId, string rawRefreshToken);
     }
 }
