@@ -254,6 +254,55 @@ public class AuthTests(MyTasksWebApplicationFactory factory) : IClassFixture<MyT
     }
 
     [Fact]
+    public async Task Logout_CannotRevokeAnotherUsersRefreshToken()
+    {
+        var userA = $"logout_a_{Guid.NewGuid():N}";
+        var userB = $"logout_b_{Guid.NewGuid():N}";
+
+        var authA =
+            await TestAuthHelper.RegisterAndLoginAsync(
+                _client,
+                userA,
+                $"{userA}@example.com");
+
+        var authB =
+            await TestAuthHelper.RegisterAndLoginAsync(
+                _client,
+                userB,
+                $"{userB}@example.com");
+
+        // Authenticate the client as User A.
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue(
+                "Bearer",
+                authA.AccessToken);
+
+        // User A attempts to revoke User B's refresh token.
+        var logoutResponse = await _client.PostAsJsonAsync(
+            "/api/auth/logout",
+            new RefreshRequestDto
+            {
+                RefreshToken = authB.RefreshToken
+            });
+
+        Assert.Equal(
+            HttpStatusCode.NoContent,
+            logoutResponse.StatusCode);
+
+        // User B's refresh token must still be usable.
+        var refreshResponse = await _client.PostAsJsonAsync(
+            "/api/auth/refresh",
+            new RefreshRequestDto
+            {
+                RefreshToken = authB.RefreshToken
+            });
+
+        Assert.Equal(
+            HttpStatusCode.OK,
+            refreshResponse.StatusCode);
+    }
+
+    [Fact]
     public async Task Me_WithValidAccessToken_ReturnsCurrentUser()
     {
         var username = $"me_{Guid.NewGuid():N}";
