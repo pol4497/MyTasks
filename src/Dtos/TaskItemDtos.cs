@@ -76,7 +76,7 @@ namespace MyTasks.Dtos
 
         public string? Search { get; set; }
 
-        // Sorting: Title | DueDate | Status (default = DueDate)
+        // Sorting: Title | Category | Status | DueDate (default)
         public string SortBy { get; set; } = "DueDate";
 
         // true = descending

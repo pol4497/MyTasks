@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MyTasks.Data;
 using MyTasks.Dtos;
+using MyTasks.Exceptions;
 using MyTasks.Models;
 
 namespace MyTasks.Repositories
@@ -38,7 +39,7 @@ namespace MyTasks.Repositories
 
             if (queryParams.Status.HasValue)
             {
-                query = query.Where(t => t.Status == (Models.TaskStatus)queryParams.Status.Value);
+                query = query.Where(t => t.Status == queryParams.Status.Value);
             }
 
             if (!string.IsNullOrWhiteSpace(queryParams.Category))
@@ -67,13 +68,34 @@ namespace MyTasks.Repositories
                     EF.Functions.Like(t.Description, $"%{s}%"));
             }
 
-            var sortBy = queryParams.SortBy?.Trim().ToLowerInvariant();
-            query = sortBy switch
+            var sortBy = queryParams.SortBy?.Trim();
+
+            if (!string.IsNullOrWhiteSpace(sortBy) &&
+                !sortBy.Equals("Title", StringComparison.OrdinalIgnoreCase) &&
+                !sortBy.Equals("Category", StringComparison.OrdinalIgnoreCase) &&
+                !sortBy.Equals("Status", StringComparison.OrdinalIgnoreCase) &&
+                !sortBy.Equals("DueDate", StringComparison.OrdinalIgnoreCase))  
             {
-                "title" => queryParams.Desc ? query.OrderByDescending(t => t.Title) : query.OrderBy(t => t.Title),
-                "status" => queryParams.Desc ? query.OrderByDescending(t => t.Status) : query.OrderBy(t => t.Status),
-                // default to due date
-                _ => queryParams.Desc ? query.OrderByDescending(t => t.DueDate) : query.OrderBy(t => t.DueDate),
+                throw new BadRequestException("Invalid sort field.");
+            }
+
+            query = sortBy?.ToLowerInvariant() switch
+            {
+                "title" => queryParams.Desc 
+                    ? query.OrderByDescending(t => t.Title) 
+                    : query.OrderBy(t => t.Title),
+
+                "category" => queryParams.Desc 
+                    ? query.OrderByDescending(t => t.Category) 
+                    : query.OrderBy(t => t.Category),
+
+                "status" => queryParams.Desc 
+                    ? query.OrderByDescending(t => t.Status) 
+                    : query.OrderBy(t => t.Status),
+
+                _ => queryParams.Desc 
+                    ? query.OrderByDescending(t => t.DueDate) 
+                    : query.OrderBy(t => t.DueDate),
             };
 
             if (queryParams.Offset.HasValue && queryParams.Offset.Value > 0) query = query.Skip(queryParams.Offset.Value);
