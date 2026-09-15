@@ -82,20 +82,19 @@ namespace MyTasks.Repositories
             query = sortBy?.ToLowerInvariant() switch
             {
                 "title" => queryParams.Desc 
-                    ? query.OrderByDescending(t => t.Title) 
-                    : query.OrderBy(t => t.Title),
+                    ? query.OrderByDescending(t => t.Title).ThenByDescending(t => t.Id)
+                    : query.OrderBy(t => t.Title).ThenBy(t => t.Id),
 
                 "category" => queryParams.Desc 
-                    ? query.OrderByDescending(t => t.Category) 
-                    : query.OrderBy(t => t.Category),
-
+                    ? query.OrderByDescending(t => t.Category).ThenByDescending(t => t.Id)
+                    : query.OrderBy(t => t.Category).ThenBy(t => t.Id),
                 "status" => queryParams.Desc 
-                    ? query.OrderByDescending(t => t.Status) 
-                    : query.OrderBy(t => t.Status),
+                    ? query.OrderByDescending(t => t.Status).ThenByDescending(t => t.Id)
+                    : query.OrderBy(t => t.Status).ThenBy(t => t.Id),
 
                 _ => queryParams.Desc 
-                    ? query.OrderByDescending(t => t.DueDate) 
-                    : query.OrderBy(t => t.DueDate),
+                    ? query.OrderByDescending(t => t.DueDate).ThenByDescending(t => t.Id)
+                    : query.OrderBy(t => t.DueDate).ThenBy(t => t.Id),
             };
 
             if (queryParams.Offset.HasValue && queryParams.Offset.Value > 0) query = query.Skip(queryParams.Offset.Value);
