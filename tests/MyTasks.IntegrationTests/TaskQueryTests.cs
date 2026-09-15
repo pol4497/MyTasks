@@ -167,6 +167,32 @@ public class TaskQueryTests(MyTasksWebApplicationFactory factory) : IClassFixtur
     }
 
     [Fact]
+    public async Task GetTasks_SortsByCategoryAscending()
+    {
+        var username = $"sortcategory_{Guid.NewGuid():N}";
+        await TestAuthHelper.RegisterAndLoginAsync(_client, username, $"{username}@example.com");
+
+        foreach (var category in new[] { "Work", "Personal", "Shopping" })
+        {
+            await _client.PostAsJsonAsync(
+                "/api/tasks",
+                new TaskCreateDto { Title = $"{category} task", Category = category });
+        }
+
+        var ascResponse = await _client.GetAsync("/api/tasks?sortBy=Category");
+        var asc = await ascResponse.Content.ReadFromJsonAsync<List<TaskReadDto>>();
+
+        Assert.NotNull(asc);
+        Assert.Equal(["Personal", "Shopping", "Work"], [.. asc.Select(t => t.Category)]);
+
+        var descResponse = await _client.GetAsync("/api/tasks?sortBy=Category&desc=true");
+        var desc = await descResponse.Content.ReadFromJsonAsync<List<TaskReadDto>>();
+
+        Assert.NotNull(desc);
+        Assert.Equal(["Work", "Shopping", "Personal"], [.. desc.Select(t => t.Category)]);
+    }
+
+    [Fact]
     public async Task GetTasks_SortsByStatus()
     {
         var username = $"sortstatus_{Guid.NewGuid():N}";
